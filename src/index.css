@@ -1,0 +1,42 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Manrope", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "DM Mono", ui-monospace, monospace;
+}
+
+:root { font-family: "Manrope", ui-sans-serif, system-ui, sans-serif; color: #1d2a32; background: #f7f9fb; font-synthesis: none; }
+* { box-sizing: border-box; }
+body { margin: 0; min-width: 320px; background: #f7f9fb; }
+button, input, select { font: inherit; }
+button { cursor: pointer; }
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-thumb { background: #ccd5db; border-radius: 999px; }
+
+@keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
+@keyframes pulse { 0%,100%{opacity:.45; transform:scale(.9)} 50%{opacity:1; transform:scale(1)} }
+@keyframes shimmer { 0%{transform:translateX(-120%)} 100%{transform:translateX(220%)} }
+
+.ambient { position:fixed; inset:0; pointer-events:none; overflow:hidden; z-index:0; }
+.ambient span { position:absolute; width:260px; height:260px; border-radius:999px; filter:blur(60px); opacity:.22; }
+.ambient span:nth-child(1){background:#dbe5ff;top:-100px;right:8%;}
+.ambient span:nth-child(2){background:#ffd9e8;bottom:8%;left:-120px;}
+.ambient span:nth-child(3){background:#ffe7d2;top:40%;right:-140px;}
+
+.noise { background-image: radial-gradient(rgba(35,49,59,.045) .7px, transparent .7px); background-size: 5px 5px; }
+
+.dark body, body.dark { background:#141b21; color:#e8eef1; }
+body.dark .surface { background:rgba(29,37,45,.88); border-color:#2d3943; }
+body.dark .muted { color:#91a0aa; }
+body.dark .soft { background:#242e37; border-color:#34414b; color:#dce5ea; }
+body.dark .sidebar-bg, body.dark .topbar-bg { background:rgba(20,27,33,.86); border-color:#2d3943; }
+body.dark .stage-bg { background:linear-gradient(145deg,#202b38,#18212b); }
+body.dark .input { background:#242e37; border-color:#34414b; color:#e8eef1; }
+body.dark .progress-track { background:#303b44; }
+
+.progress-track { height:7px; background:#edf1f3; border-radius:99px; overflow:hidden; }
+.progress-fill { height:100%; border-radius:99px; transition:width .45s ease; }
+
+@media (max-width: 700px){
+  .desktop-only{display:none!important}
+}
