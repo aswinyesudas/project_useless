@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { createRoot } from 'react-dom/client'
+import * as THREE from 'three'
 import './index.css'
 
 const KEY = 'proxyWorkoutReactState'
@@ -135,7 +136,48 @@ function Workout({workout,setWorkout,rest,setRest,rotation,setRotation,completeR
   <Panel><div className="flex justify-between"><Kicker>CURRENT PROTOCOL</Kicker><b className="text-xs">{workout.exercise}</b></div><div className="mt-5"><strong className="text-5xl tracking-tighter">{workout.currentSet>=workout.sets?workout.reps:workout.currentRep}</strong><span className="text-[10px] text-slate-400 ml-2">/ {workout.reps} reps</span></div><div className="flex gap-2 mt-5"><button onClick={skipSet} className="soft flex-1 rounded-xl border border-slate-200 bg-white px-3 py-3 text-[10px] font-bold">Skip set</button>{workout.currentSet>=workout.sets?<button onClick={restart} className="flex-1 rounded-xl bg-indigo-600 text-white px-3 py-3 text-[10px] font-bold">Start again →</button>:<button onClick={completeRep} disabled={!running} className="flex-1 rounded-xl bg-indigo-600 disabled:opacity-40 text-white px-3 py-3 text-[10px] font-bold">Complete rep</button>}</div><div className="flex justify-between border-t mt-5 pt-4 text-[9px] text-slate-400"><span>Rest between sets</span><select value={rest} onChange={e=>setRest(Number(e.target.value))} className="bg-transparent"><option>12</option><option>20</option><option>30</option></select></div></Panel></div>
  </div></section>
 }
-function Avatar({running,fatigue,rotation}){return <div className="relative w-52 h-80" style={{transform:`rotateY(${rotation*45}deg)`}}><div className={`absolute left-1/2 -translate-x-1/2 top-2 w-20 h-20 rounded-full bg-gradient-to-br from-[#f4c6a8] to-[#c98667] shadow-xl ${running?'animate-[float_1.2s_ease-in-out_infinite]':''}`}/><div className="absolute left-1/2 -translate-x-1/2 top-[76px] w-28 h-36 rounded-[40%] bg-gradient-to-b from-indigo-500 to-indigo-800 shadow-xl"/><div className="absolute left-[36px] top-[95px] w-9 h-32 rounded-full bg-indigo-700 rotate-[8deg] origin-top"/><div className="absolute right-[36px] top-[95px] w-9 h-32 rounded-full bg-indigo-700 -rotate-[8deg] origin-top"/><div className="absolute left-[69px] top-[204px] w-10 h-28 rounded-full bg-slate-700 rotate-[4deg] origin-top"/><div className="absolute right-[69px] top-[204px] w-10 h-28 rounded-full bg-slate-700 -rotate-[4deg] origin-top"/><div className="absolute left-[84px] top-[38px] w-2 h-2 rounded-full bg-slate-800"/><div className="absolute right-[84px] top-[38px] w-2 h-2 rounded-full bg-slate-800"/><div className="absolute left-1/2 -translate-x-1/2 top-[56px] w-8 h-1 rounded-full bg-slate-700/50"/><div className="absolute left-1/2 -translate-x-1/2 bottom-0 w-44 h-5 rounded-full bg-indigo-200/40 blur-md"/><div className="absolute -right-1 top-0 text-[8px] font-mono text-indigo-400">FATIGUE {Math.round(fatigue)}%</div></div>}
+function Avatar({running,fatigue,rotation}){
+ const mount=React.useRef(null)
+ const scene=React.useRef(null)
+ const [zoom,setZoom]=useState(1)
+ const [dragging,setDragging]=useState(false)
+ const [yaw,setYaw]=useState(rotation*.65)
+
+ useEffect(()=>setYaw(rotation*.65),[rotation])
+ useEffect(()=>{
+  if(!mount.current) return
+  const width=mount.current.clientWidth, height=mount.current.clientHeight
+  const renderer=new THREE.WebGLRenderer({antialias:true,alpha:true})
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio,2)); renderer.setSize(width,height); renderer.shadowMap.enabled=true
+  renderer.outputColorSpace=THREE.SRGBColorSpace; mount.current.appendChild(renderer.domElement)
+  const world=new THREE.Scene(); const camera=new THREE.PerspectiveCamera(28,width/height,.1,100); camera.position.set(0,1.9,6.2)
+  world.add(new THREE.HemisphereLight(0xdfeaff,0x263349,2.3))
+  const key=new THREE.DirectionalLight(0xffffff,3.4); key.position.set(3,5,4); key.castShadow=true; world.add(key)
+  const rim=new THREE.PointLight(0xff8fbe,8,7); rim.position.set(-3,1.7,2); world.add(rim)
+  const root=new THREE.Group(); root.position.y=-1.25; world.add(root)
+  const material=(color,roughness=.65,metalness=.05)=>new THREE.MeshStandardMaterial({color,roughness,metalness})
+  const navy=material(0x3448a3,.42,.25), dark=material(0x202b45,.5,.3), skin=material(0xd38c70,.62), glow=material(0x79f2d0,.28,.5)
+  const mesh=(geometry,mat,position,scale)=>{const item=new THREE.Mesh(geometry,mat); item.position.set(...position); if(scale)item.scale.set(...scale); item.castShadow=true; root.add(item); return item}
+  const torso=mesh(new THREE.CapsuleGeometry(.6,.9,8,16),navy,[0,1.7,0],[1,.9,.62])
+  const head=mesh(new THREE.IcosahedronGeometry(.48,2),skin,[0,2.92,0],[.95,1.08,.92])
+  mesh(new THREE.BoxGeometry(.32,.08,.06),glow,[0,2.98,.43],[1,1,1])
+  const leftArm=mesh(new THREE.CapsuleGeometry(.15,.9,6,12),navy,[-.72,1.78,0],[1,1,1]); leftArm.rotation.z=-.14
+  const rightArm=mesh(new THREE.CapsuleGeometry(.15,.9,6,12),navy,[.72,1.78,0],[1,1,1]); rightArm.rotation.z=.14
+  const leftLeg=mesh(new THREE.CapsuleGeometry(.2,1.05,6,12),dark,[-.3,.55,0],[1,1,1]); const rightLeg=mesh(new THREE.CapsuleGeometry(.2,1.05,6,12),dark,[.3,.55,0],[1,1,1])
+  mesh(new THREE.TorusGeometry(.92,.025,8,48),glow,[0,.03,0],[1,1,.62])
+  const floor=new THREE.Mesh(new THREE.CircleGeometry(1.15,48),new THREE.MeshBasicMaterial({color:0x91a7ff,transparent:true,opacity:.18})); floor.rotation.x=-Math.PI/2; floor.position.y=-.02; floor.scale.set(1.3,1,1); root.add(floor)
+  const resize=()=>{const w=mount.current.clientWidth,h=mount.current.clientHeight; camera.aspect=w/h; camera.updateProjectionMatrix(); renderer.setSize(w,h)}
+  window.addEventListener('resize',resize); scene.current={renderer,world,camera,root,torso,leftArm,rightArm,leftLeg,rightLeg}
+  let frame=0; const animate=()=>{frame=requestAnimationFrame(animate); const t=frame/60; root.rotation.y=yaw; const bob=running?Math.sin(t*5)*.045:Math.sin(t)*.012; root.position.y=-1.25+bob; torso.rotation.x=running?Math.sin(t*5)*.04:0; leftArm.rotation.x=running?Math.sin(t*5)*.45:0; rightArm.rotation.x=running?-Math.sin(t*5)*.45:0; leftLeg.rotation.x=running?-Math.sin(t*5)*.18:0; rightLeg.rotation.x=running?Math.sin(t*5)*.18:0; renderer.render(world,camera)}; animate()
+  return()=>{cancelAnimationFrame(frame); window.removeEventListener('resize',resize); renderer.dispose(); mount.current?.removeChild(renderer.domElement); scene.current=null}
+ },[running])
+ useEffect(()=>{if(scene.current){scene.current.root.rotation.y=yaw; scene.current.camera.position.z=6.2/zoom}},[yaw,zoom])
+ const pointerDown=e=>{setDragging(true); e.currentTarget.setPointerCapture(e.pointerId)}
+ const pointerMove=e=>{if(dragging)setYaw(v=>v+e.movementX*.012)}
+ return <div className="three-avatar relative w-full max-w-[430px] h-[380px]" onPointerDown={pointerDown} onPointerMove={pointerMove} onPointerUp={()=>setDragging(false)} onPointerLeave={()=>setDragging(false)} onWheel={e=>setZoom(v=>Math.max(.82,Math.min(1.3,v-e.deltaY*.0008)))}>
+  <div ref={mount} className="three-shell absolute inset-0"/><div className="absolute right-3 top-2 text-[8px] font-mono text-indigo-400">FATIGUE {Math.round(fatigue)}%</div><div className="absolute left-3 bottom-2 rounded-full border border-white/70 bg-white/55 px-2.5 py-1 text-[8px] font-mono tracking-widest text-slate-500 backdrop-blur">DRAG TO ROTATE · SCROLL TO ZOOM</div>
+ </div>
+}
 
 function WorkoutModal({custom,setCustom,setModal,begin}){return <div className="fixed inset-0 z-40 bg-slate-900/40 backdrop-blur-sm grid place-items-center p-5"><div className="surface relative w-full max-w-xl rounded-3xl bg-white border border-slate-200 p-6 shadow-2xl"><button onClick={()=>setModal(false)} className="absolute right-5 top-4 text-xl text-slate-400">×</button><Kicker>BUILD A PROTOCOL</Kicker><h2 className="text-2xl font-extrabold mt-2">How useless should today be?</h2><p className="text-xs text-slate-500 mt-2">Pick an exercise. Your AI will take responsibility for the suffering.</p><div className="grid grid-cols-3 gap-2 mt-6">{['Jumping jacks','Squats','Sit-ups'].map(ex=><button key={ex} onClick={()=>setCustom(c=>({...c,exercise:ex,reps:ex==='Jumping jacks'?20:ex==='Sit-ups'?15:12}))} className={`rounded-xl border p-3 text-left ${custom.exercise===ex?'border-indigo-400 bg-indigo-50':'border-slate-200'}`}><span className="text-xl">{ex==='Jumping jacks'?'⚡':ex==='Squats'?'◒':'▬'}</span><b className="block text-[10px] mt-2">{ex}</b></button>)}</div><div className="grid grid-cols-3 gap-2 mt-4"><label className="text-[9px] text-slate-400">Exercise<select value={custom.exercise} onChange={e=>setCustom(c=>({...c,exercise:e.target.value}))} className="input mt-1 w-full rounded-lg border bg-slate-50 p-2.5 text-xs text-slate-700"><option>Jumping jacks</option><option>Squats</option><option>Push-ups</option><option>Sit-ups</option><option>Lunges</option><option>Plank</option></select></label><label className="text-[9px] text-slate-400">Reps<input type="number" min="1" max="100" value={custom.reps} onChange={e=>setCustom(c=>({...c,reps:Number(e.target.value)}))} className="input mt-1 w-full rounded-lg border bg-slate-50 p-2.5 text-xs"/></label><label className="text-[9px] text-slate-400">Sets<input type="number" min="1" max="10" value={custom.sets} onChange={e=>setCustom(c=>({...c,sets:Number(e.target.value)}))} className="input mt-1 w-full rounded-lg border bg-slate-50 p-2.5 text-xs"/></label></div><button onClick={()=>begin({...custom,name:'CUSTOM PROTOCOL'})} className="mt-5 w-full rounded-xl bg-indigo-600 text-white py-3 text-xs font-bold">Launch protocol →</button></div></div>}
 
