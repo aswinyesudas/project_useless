@@ -149,23 +149,34 @@ function Avatar({running,fatigue,rotation}){
   const width=mount.current.clientWidth, height=mount.current.clientHeight
   const renderer=new THREE.WebGLRenderer({antialias:true,alpha:true})
   renderer.setPixelRatio(Math.min(window.devicePixelRatio,2)); renderer.setSize(width,height); renderer.shadowMap.enabled=true
-  renderer.outputColorSpace=THREE.SRGBColorSpace; mount.current.appendChild(renderer.domElement)
+  renderer.outputColorSpace=THREE.SRGBColorSpace; renderer.toneMapping=THREE.ACESFilmicToneMapping; renderer.toneMappingExposure=1.15; mount.current.appendChild(renderer.domElement)
   const world=new THREE.Scene(); const camera=new THREE.PerspectiveCamera(28,width/height,.1,100); camera.position.set(0,1.9,6.2)
-  world.add(new THREE.HemisphereLight(0xdfeaff,0x263349,2.3))
-  const key=new THREE.DirectionalLight(0xffffff,3.4); key.position.set(3,5,4); key.castShadow=true; world.add(key)
-  const rim=new THREE.PointLight(0xff8fbe,8,7); rim.position.set(-3,1.7,2); world.add(rim)
+  world.add(new THREE.HemisphereLight(0xe9f1ff,0x182238,2.1))
+  const key=new THREE.DirectionalLight(0xfff3e8,4.2); key.position.set(3,5,4); key.castShadow=true; key.shadow.mapSize.set(1024,1024); world.add(key)
+  const rim=new THREE.PointLight(0x79f2d0,9,7); rim.position.set(-3,2.4,2); world.add(rim)
+  const fill=new THREE.PointLight(0xff8fbe,5,6); fill.position.set(2,-.2,2); world.add(fill)
   const root=new THREE.Group(); root.position.y=-1.25; world.add(root)
   const material=(color,roughness=.65,metalness=.05)=>new THREE.MeshStandardMaterial({color,roughness,metalness})
-  const navy=material(0x3448a3,.42,.25), dark=material(0x202b45,.5,.3), skin=material(0xd38c70,.62), glow=material(0x79f2d0,.28,.5)
+  const navy=material(0x3347a5,.52,.18), dark=material(0x1c2740,.48,.28), skin=material(0xd69a7b,.7), skinDark=material(0x9b5d4d,.76), hair=material(0x202335,.5,.1), white=material(0xf7fbff,.3), glow=material(0x79f2d0,.22,.55)
   const mesh=(geometry,mat,position,scale)=>{const item=new THREE.Mesh(geometry,mat); item.position.set(...position); if(scale)item.scale.set(...scale); item.castShadow=true; root.add(item); return item}
-  const torso=mesh(new THREE.CapsuleGeometry(.6,.9,8,16),navy,[0,1.7,0],[1,.9,.62])
-  const head=mesh(new THREE.IcosahedronGeometry(.48,2),skin,[0,2.92,0],[.95,1.08,.92])
-  mesh(new THREE.BoxGeometry(.32,.08,.06),glow,[0,2.98,.43],[1,1,1])
-  const leftArm=mesh(new THREE.CapsuleGeometry(.15,.9,6,12),navy,[-.72,1.78,0],[1,1,1]); leftArm.rotation.z=-.14
-  const rightArm=mesh(new THREE.CapsuleGeometry(.15,.9,6,12),navy,[.72,1.78,0],[1,1,1]); rightArm.rotation.z=.14
-  const leftLeg=mesh(new THREE.CapsuleGeometry(.2,1.05,6,12),dark,[-.3,.55,0],[1,1,1]); const rightLeg=mesh(new THREE.CapsuleGeometry(.2,1.05,6,12),dark,[.3,.55,0],[1,1,1])
+  const torso=mesh(new THREE.CapsuleGeometry(.58,.82,10,20),navy,[0,1.72,0],[1,.92,.62])
+  mesh(new THREE.SphereGeometry(.48,24,16),dark,[0,1.16,0],[1,.5,.66])
+  mesh(new THREE.CylinderGeometry(.18,.2,.22,16),skin,[0,2.47,0])
+  const head=mesh(new THREE.SphereGeometry(.47,24,18),skin,[0,2.93,0],[.96,1.08,.9])
+  mesh(new THREE.SphereGeometry(.5,20,12,0,Math.PI*2,0,Math.PI*.48),hair,[0,3.02,-.02],[1,1,.96])
+  mesh(new THREE.SphereGeometry(.1,12,8),skin,[.48,2.94,0],[.55,1,1]); mesh(new THREE.SphereGeometry(.1,12,8),skin,[-.48,2.94,0],[.55,1,1])
+  mesh(new THREE.SphereGeometry(.055,12,8),white,[-.17,2.98,.425]); mesh(new THREE.SphereGeometry(.055,12,8),white,[.17,2.98,.425])
+  mesh(new THREE.SphereGeometry(.022,8,6),dark,[-.17,2.98,.474]); mesh(new THREE.SphereGeometry(.022,8,6),dark,[.17,2.98,.474])
+  mesh(new THREE.ConeGeometry(.08,.18,12),skinDark,[0,2.84,.46],[1,1,.7]).rotation.x=Math.PI/2
+  mesh(new THREE.TorusGeometry(.1,.018,8,16,Math.PI),skinDark,[0,2.72,.45],[1,.7,1]).rotation.x=Math.PI
+  mesh(new THREE.BoxGeometry(.34,.075,.05),glow,[0,2.99,.44],[1,1,1])
+  const leftArm=mesh(new THREE.CapsuleGeometry(.14,.78,8,14),navy,[-.71,1.78,0],[1,1,1]); leftArm.rotation.z=-.14
+  const rightArm=mesh(new THREE.CapsuleGeometry(.14,.78,8,14),navy,[.71,1.78,0],[1,1,1]); rightArm.rotation.z=.14
+  mesh(new THREE.SphereGeometry(.17,16,10),navy,[-.73,1.35,0]); mesh(new THREE.SphereGeometry(.17,16,10),navy,[.73,1.35,0])
+  const leftLeg=mesh(new THREE.CapsuleGeometry(.19,1.02,8,14),dark,[-.3,.55,0],[1,1,1]); const rightLeg=mesh(new THREE.CapsuleGeometry(.19,1.02,8,14),dark,[.3,.55,0],[1,1,1])
+  mesh(new THREE.SphereGeometry(.22,16,10),dark,[-.3,.05,.04],[1,.6,1.35]); mesh(new THREE.SphereGeometry(.22,16,10),dark,[.3,.05,.04],[1,.6,1.35])
   mesh(new THREE.TorusGeometry(.92,.025,8,48),glow,[0,.03,0],[1,1,.62])
-  const floor=new THREE.Mesh(new THREE.CircleGeometry(1.15,48),new THREE.MeshBasicMaterial({color:0x91a7ff,transparent:true,opacity:.18})); floor.rotation.x=-Math.PI/2; floor.position.y=-.02; floor.scale.set(1.3,1,1); root.add(floor)
+  const floor=new THREE.Mesh(new THREE.CircleGeometry(1.15,48),new THREE.MeshStandardMaterial({color:0x91a7ff,roughness:.82,metalness:.05,transparent:true,opacity:.25})); floor.rotation.x=-Math.PI/2; floor.position.y=-.02; floor.scale.set(1.3,1,1); floor.receiveShadow=true; root.add(floor)
   const resize=()=>{const w=mount.current.clientWidth,h=mount.current.clientHeight; camera.aspect=w/h; camera.updateProjectionMatrix(); renderer.setSize(w,h)}
   window.addEventListener('resize',resize); scene.current={renderer,world,camera,root,torso,leftArm,rightArm,leftLeg,rightLeg}
   let frame=0; const animate=()=>{frame=requestAnimationFrame(animate); const t=frame/60; root.rotation.y=yaw; const bob=running?Math.sin(t*5)*.045:Math.sin(t)*.012; root.position.y=-1.25+bob; torso.rotation.x=running?Math.sin(t*5)*.04:0; leftArm.rotation.x=running?Math.sin(t*5)*.45:0; rightArm.rotation.x=running?-Math.sin(t*5)*.45:0; leftLeg.rotation.x=running?-Math.sin(t*5)*.18:0; rightLeg.rotation.x=running?Math.sin(t*5)*.18:0; renderer.render(world,camera)}; animate()
